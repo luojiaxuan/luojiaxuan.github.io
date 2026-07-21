@@ -40,6 +40,9 @@ layout: default
 
     <div class="clearfix">{{ content }}</div>
 
+    <h2>experience</h2>
+    {% include experience.liquid %}
+
     <!-- News -->
     {% if page.announcements and page.announcements.enabled %}
       <h2>
@@ -66,9 +69,6 @@ layout: default
       </h2>
       {% include selected_papers.liquid %}
     {% endif %}
-
-    <h2>experience</h2>
-    {% include experience.liquid %}
 
     <h2>education</h2>
     {% include education.liquid %}

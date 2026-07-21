@@ -23,4 +23,4 @@
 - organization: Alibaba Group
   role: Algorithm Engineer (MLE)
   period: 2021–2024
-  summary: Large-scale recommendation systems, policy learning, and distributed inference.
+  summary: Built multi-objective recommendation models (MMoE/MTL), causal uplift estimators, and constrained RL policies for large-scale marketplace ranking and coupon allocation. Improved long-term metric stability and budget-constrained ROI, while delivering ~9% relative lift in targeted conversion experiments.
