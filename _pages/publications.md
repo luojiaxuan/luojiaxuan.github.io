@@ -1,7 +1,7 @@
 ---
 layout: page
 permalink: /publications/
-title: publications
+title: Publications
 description: Selected publications by Jiaxuan Luo on streaming multimodal systems, speech agents, and model behavior.
 nav: true
 nav_order: 1

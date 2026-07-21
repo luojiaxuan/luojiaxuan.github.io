@@ -40,18 +40,18 @@ layout: default
 
     <div class="clearfix">{{ content }}</div>
 
-    <h2>experience</h2>
+    <h2>Experience</h2>
     {% include experience.liquid %}
 
     <!-- News -->
     {% if page.announcements and page.announcements.enabled %}
       <h2>
-        <a href="{{ '/news/' | relative_url }}" style="color: inherit">news</a>
+        <a href="{{ '/news/' | relative_url }}" style="color: inherit">News</a>
       </h2>
       {% include news.liquid limit=true %}
     {% endif %}
 
-    <h2>selected work</h2>
+    <h2>Selected Work</h2>
     {% include selected_work.liquid %}
 
     <!-- Latest posts -->
@@ -65,12 +65,12 @@ layout: default
     <!-- Selected papers -->
     {% if page.selected_papers %}
       <h2>
-        <a href="{{ '/publications/' | relative_url }}" style="color: inherit">selected publications</a>
+        <a href="{{ '/publications/' | relative_url }}" style="color: inherit">Selected Publications</a>
       </h2>
       {% include selected_papers.liquid %}
     {% endif %}
 
-    <h2>education</h2>
+    <h2>Education</h2>
     {% include education.liquid %}
 
     <!-- Social -->

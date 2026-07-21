@@ -1,6 +1,6 @@
 ---
 layout: about
-title: about
+title: About
 permalink: /
 subtitle: Research Engineer · Streaming Multimodal Systems
 description: Jiaxuan Luo works on streaming multimodal systems, post-training, and efficient inference optimization.
