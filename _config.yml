@@ -9,7 +9,7 @@ last_name: Luo
 contact_note: >
   For research and open-source collaboration, email is the best way to reach me.
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
-  Jiaxuan Luo is a research engineer working on streaming multimodal systems, post-training, and high-performance inference.
+  Jiaxuan Luo is a research engineer working on streaming multimodal systems, post-training, and efficient inference optimization.
 footer_text: >
   Built with <a href="https://github.com/alshedivat/al-folio">al-folio</a> and hosted on GitHub Pages.
 keywords: streaming multimodal systems, speech agents, efficient inference, post-training, machine learning systems

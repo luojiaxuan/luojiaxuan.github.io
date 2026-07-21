@@ -3,7 +3,7 @@ layout: about
 title: about
 permalink: /
 subtitle: Research Engineer · Streaming Multimodal Systems
-description: Jiaxuan Luo works on streaming multimodal systems, post-training, and high-performance inference.
+description: Jiaxuan Luo works on streaming multimodal systems, post-training, and efficient inference optimization.
 
 profile: false
 selected_papers: true
@@ -19,7 +19,7 @@ latest_posts:
 ---
 
 <div class="home-intro">
-  <p class="lead">I'm a research engineer focused on <strong>streaming multimodal systems</strong>—real-time speech/omni models, post-training, and high-performance inference.</p>
+  <p class="lead">I'm a research engineer focused on <strong>streaming multimodal systems</strong>—real-time speech/omni models, post-training, and efficient inference optimization.</p>
 
   <p>I work across model and systems research: developing learning and agent capabilities for live multimodal streams, then making them run efficiently under tight latency, memory, and reliability constraints.</p>
 
