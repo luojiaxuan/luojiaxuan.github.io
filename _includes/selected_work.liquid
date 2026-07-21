@@ -1,0 +1,17 @@
+<div class="work-grid">
+  {% for item in site.data.work %}
+    <article class="work-item">
+      <div class="eyebrow">{{ item.label }}</div>
+      <h3><a href="{{ item.url }}">{{ item.title }}</a></h3>
+      <p>{{ item.summary }}</p>
+      {% if item.links %}
+        <div class="work-links">
+          {% for link in item.links %}
+            <a href="{{ link.url }}">{{ link.name }} <span aria-hidden="true">↗</span></a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </article>
+  {% endfor %}
+</div>
+

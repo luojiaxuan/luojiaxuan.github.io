@@ -1,0 +1,26 @@
+- organization: Waymo (Alphabet)
+  role: Machine Learning Engineer
+  period: 2026–present
+  summary: Efficient TPU/GPU inference for autonomous-driving systems, with a focus on determinism, memory efficiency, and runtime performance.
+
+- organization: SGLang-Omni
+  role: Core Contributor
+  period: 2026–present
+  summary: Real-time multimodal inference and shared TTS runtime systems.
+  url: https://github.com/sgl-project/sglang-omni
+
+- organization: Carnegie Mellon University, LTI
+  role: Research Assistant
+  period: 2025–2026
+  summary: Streaming speech agents, retrieval, reinforcement learning, and efficient inference; advised by Prof. Lei Li.
+  url: https://www.cs.cmu.edu/~leili/
+
+- organization: TikTok
+  role: Research Engineer Intern
+  period: 2025
+  summary: Post-training and low-latency serving for reasoning agents.
+
+- organization: Alibaba Group
+  role: Machine Learning Engineer II
+  period: 2021–2024
+  summary: Large-scale recommendation systems, policy learning, and distributed inference.
