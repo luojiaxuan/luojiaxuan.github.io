@@ -34,13 +34,9 @@
     - name: HPO paper
       url: https://arxiv.org/abs/2604.21045
 
-- title: InfiniSST Serving
-  label: ML systems · Streaming inference
-  url: https://github.com/LeiLiLab/InfiniSST
-  summary: A Ray and FlashInfer PagedAttention engine with dynamic KV-cache eviction for high-throughput, unbounded-speech translation.
-  links:
-    - name: Paper
-      url: https://arxiv.org/abs/2503.02969
+- title: CausalCache
+  label: Research · GUI agent memory
+  summary: Fixed-budget visual-memory reallocation for long-horizon GUI agents, combining history-gated KV adaptation with conditional restoration of task-relevant past screens.
 
 - title: SUSVIBES
   label: Research · Agent security
@@ -49,4 +45,3 @@
   links:
     - name: Paper
       url: https://openreview.net/forum?id=qG8g00zRZa
-
