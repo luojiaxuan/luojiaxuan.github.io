@@ -36,7 +36,11 @@
 
 - title: CausalCache
   label: Research · GUI agent memory
+  url: https://arxiv.org/abs/2608.22577
   summary: Fixed-budget visual-memory reallocation for long-horizon GUI agents, combining history-gated KV adaptation with conditional restoration of task-relevant past screens.
+  links:
+    - name: Paper
+      url: https://arxiv.org/abs/2608.22577
 
 - title: SUSVIBES
   label: Research · Agent security
