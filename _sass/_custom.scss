@@ -90,6 +90,24 @@ header.fixed-top {
   padding-bottom: 0;
 }
 
+.identity-header {
+  align-items: center;
+  display: flex;
+  gap: 2rem;
+}
+
+.identity-avatar {
+  border-radius: 50%;
+  flex: 0 0 auto;
+  height: 132px;
+  object-fit: cover;
+  width: 132px;
+}
+
+.identity-copy {
+  min-width: 0;
+}
+
 .post-title {
   font-size: 1.85rem;
   font-weight: 700;
@@ -385,6 +403,15 @@ html[data-theme="dark"] body.home-page {
 @media (max-width: 767px) {
   .home-page .post {
     padding-top: 2rem;
+  }
+
+  .identity-header {
+    gap: 1rem;
+  }
+
+  .identity-avatar {
+    height: 88px;
+    width: 88px;
   }
 
   .post article > h2 {
