@@ -3,15 +3,10 @@ layout: default
 ---
 <div class="post">
   <header class="post-header">
-    <h1 class="post-title">
-      {% if site.title == 'blank' %}
-        <span class="font-weight-bold">{{ site.first_name | upcase }}</span> {{ site.middle_name }}
-        {{ site.last_name | upcase }}
-      {% else %}
-        {{ site.title }}
-      {% endif %}
-    </h1>
-    <p class="desc">{{ page.subtitle }}</p>
+    <h1 class="post-title">{{ site.first_name | upcase }} {{ site.last_name | upcase }}</h1>
+    <p class="identity-role">{{ page.subtitle }}</p>
+    <p class="identity-affiliation">Waymo (Alphabet)</p>
+    <a class="identity-email" href="mailto:luojiaxuan1215@gmail.com">luojiaxuan1215@gmail.com</a>
   </header>
 
   <article>
@@ -45,7 +40,7 @@ layout: default
       <h2>
         <a href="{{ '/news/' | relative_url }}" style="color: inherit">News</a>
       </h2>
-      {% include news.liquid limit=true %}
+      {% include news.liquid limit=true compact=true %}
     {% endif %}
 
     <!-- Latest posts -->
