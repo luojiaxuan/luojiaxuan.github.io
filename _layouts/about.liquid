@@ -48,9 +48,6 @@ layout: default
       {% include news.liquid limit=true %}
     {% endif %}
 
-    <h2>Selected Work</h2>
-    {% include selected_work.liquid %}
-
     <!-- Latest posts -->
     {% if page.latest_posts and page.latest_posts.enabled %}
       <h2>
@@ -69,6 +66,9 @@ layout: default
 
     <h2>Experience</h2>
     {% include experience.liquid %}
+
+    <h2>Selected Work</h2>
+    {% include selected_work.liquid %}
 
     <h2>Education</h2>
     {% include education.liquid %}
