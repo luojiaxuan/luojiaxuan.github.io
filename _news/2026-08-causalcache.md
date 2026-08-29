@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-[CausalCache](https://arxiv.org/abs/2608.22577), our work on conditional high-fidelity restoration for long-horizon GUI agents, is now on arXiv.
+[CausalCache](https://arxiv.org/abs/2608.22577) is now on arXiv.

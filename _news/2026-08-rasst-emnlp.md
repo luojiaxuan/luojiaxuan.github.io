@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-[RASST](https://arxiv.org/abs/2601.22777) was accepted to the **EMNLP 2026 Main Conference**.
+[RASST](https://arxiv.org/abs/2601.22777) was accepted to **EMNLP 2026 Main**.

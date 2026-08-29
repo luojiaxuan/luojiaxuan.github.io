@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-Leading the [TTS runtime refactor](https://github.com/sgl-project/sglang-omni/issues/985) in SGLang-Omni.
+Leading [SGLang-Omni's TTS runtime refactor](https://github.com/sgl-project/sglang-omni/issues/985).

@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-Released [AutoTerm-SST](https://github.com/luojiaxuan/autoterm-sst), an adaptive terminology-memory system for simultaneous speech translation.
+[AutoTerm-SST](https://github.com/luojiaxuan/autoterm-sst) was accepted to **EMNLP 2026 System Demonstrations**.
