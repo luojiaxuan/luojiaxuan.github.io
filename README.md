@@ -20,7 +20,7 @@ bundle exec jekyll serve
 - Publications：`_bibliography/papers.bib`
 - 视觉样式：`_sass/_custom.scss`
 
-论文投稿与审稿状态写在 Publications，不作为 News；News 中的论文录用信息用简短单行描述。arXiv 链接在公开后补充。
+论文相关 News 只发布录用消息，保持简短单行；投稿、审稿状态及 arXiv／预印本发布均不作为 News。论文状态与公开后的 arXiv 链接统一维护在 Publications。
 Selected Work 展示 SGLang-Omni 和 sst-rl-framework 两个开源项目，论文工作集中在 Publications。
 
 ## Source of Truth
