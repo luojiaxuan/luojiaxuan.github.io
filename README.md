@@ -20,6 +20,8 @@ bundle exec jekyll serve
 - Publications：`_bibliography/papers.bib`
 - 视觉样式：`_sass/_custom.scss`
 
+论文投稿与审稿状态写在 Publications，不作为 News；News 中的论文录用信息用简短单行描述。arXiv 链接在公开后补充。
+
 ## Source of Truth
 
 - Git 仓库：[luojiaxuan/luojiaxuan.github.io](https://github.com/luojiaxuan/luojiaxuan.github.io)，以 `main` 分支为准
