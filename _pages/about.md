@@ -23,7 +23,7 @@ latest_posts:
 <div class="home-intro">
   <p>I'm a research engineer focused on <strong>streaming multimodal systems</strong>—real-time speech/omni models, post-training, and efficient inference optimization.</p>
 
-  <p>Currently, I work on simulation inference at <strong>Waymo LLC</strong>, focusing on TPU/GPU inference scheduling and nondeterminism, and contribute to <a href="https://github.com/sgl-project/sglang-omni"><strong>SGLang-Omni</strong></a> as a <a href="https://github.com/sgl-project/sglang-omni/graphs/contributors?from=6%2F27%2F2026">core contributor (#3)</a>. Previously, I spent three years at <strong>Alibaba</strong> working on recommendation algorithms and conducted research with <a href="https://www.cs.cmu.edu/~leili/"><strong>Prof. Lei Li</strong></a> at <strong>CMU LTI</strong>.</p>
+  <p>Currently, I work on simulation inference at <strong>Waymo LLC</strong>, focusing on TPU/GPU inference scheduling and nondeterminism, and contribute to <a href="https://github.com/sgl-project/sglang-omni"><strong>SGLang-Omni</strong></a> as a core contributor (#3). Previously, I spent three years at <strong>Alibaba</strong> working on recommendation algorithms and conducted research with <a href="https://www.cs.cmu.edu/~leili/"><strong>Prof. Lei Li</strong></a> at <strong>CMU LTI</strong>.</p>
 </div>
 
 <div class="home-links" aria-label="Profile links">
