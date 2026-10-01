@@ -1,7 +1,7 @@
 - title: SGLang-Omni
   label: Open source · ML systems
   url: https://github.com/sgl-project/sglang-omni
-  summary: Core contributor (top 3 by commits), leading the TTS runtime refactor and working on mixed-chunk scheduling, tensor-parallel correctness, topology-aware collectives, and shared multimodal serving infrastructure.
+  summary: Core contributor (#3), leading the TTS runtime refactor and working on mixed-chunk scheduling, tensor-parallel correctness, topology-aware collectives, and shared multimodal serving infrastructure.
   links:
     - name: Contributor ranking
       url: https://github.com/sgl-project/sglang-omni/graphs/contributors?from=6%2F27%2F2026
