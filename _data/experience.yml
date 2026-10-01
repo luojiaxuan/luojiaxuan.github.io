@@ -18,7 +18,7 @@
 - organization: TikTok
   role: Research Engineer Intern
   period: 2025
-  summary: Post-training and low-latency serving for reasoning agents.
+  summary: Supervised fine-tuning (SFT) for multi-agent systems.
 
 - organization: Alibaba Group
   role: Algorithm Engineer (MLE)
