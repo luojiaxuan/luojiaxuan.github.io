@@ -23,6 +23,8 @@ bundle exec jekyll serve
 论文相关 News 只发布录用消息，保持简短单行；投稿、审稿状态及 arXiv／预印本发布均不作为 News。论文状态与公开后的 arXiv 链接统一维护在 Publications。
 Selected Work 展示 SGLang-Omni 和 sst-rl-framework 两个开源项目，论文工作集中在 Publications。
 
+SGLang-Omni 的贡献排名按 commits 统计，展示为 `Top 3 by commits` 并链接[贡献榜](https://github.com/sgl-project/sglang-omni/graphs/contributors?from=6%2F27%2F2026)。2026-10-01 经 GitHub contributors API 核对，`luojiaxuan` 为第 3 名（68 commits）。
+
 ## Source of Truth
 
 - Git 仓库：[luojiaxuan/luojiaxuan.github.io](https://github.com/luojiaxuan/luojiaxuan.github.io)，以 `main` 分支为准

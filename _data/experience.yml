@@ -4,7 +4,7 @@
   summary: Simulation inference on TPU/GPU systems, focusing on scheduling and inference nondeterminism.
 
 - organization: SGLang-Omni
-  role: Core Contributor
+  role: Core Contributor (Top 3 by commits)
   period: 2026–present
   summary: Real-time multimodal inference and shared TTS runtime systems.
   url: https://github.com/sgl-project/sglang-omni
