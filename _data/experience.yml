@@ -1,7 +1,7 @@
 - organization: Waymo LLC
-  role: Simulation Research Engineer
+  role: Machine Learning Engineer
   period: 2026–present
-  summary: Research on efficient TPU/GPU inference for autonomous-driving simulation, with a focus on determinism, memory efficiency, and runtime performance.
+  summary: Simulation inference on TPU/GPU systems, focusing on scheduling and inference nondeterminism.
 
 - organization: SGLang-Omni
   role: Core Contributor
