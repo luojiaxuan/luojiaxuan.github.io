@@ -78,6 +78,9 @@ layout: default
     <h2>Education</h2>
     {% include education.liquid %}
 
+    <h2>Academic Service</h2>
+    <p><strong>Reviewer:</strong> {{ site.data.service.reviewer | join: ' · ' }}.</p>
+
     <!-- Social -->
     {% if page.social %}
       <div class="social">

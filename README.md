@@ -16,6 +16,7 @@ bundle exec jekyll serve
 - 首页简介：`_pages/about.md`
 - Selected Work：`_data/work.yml`
 - 经历与教育：`_data/experience.yml`、`_data/education.yml`
+- 审稿服务：`_data/service.yml`，在首页末尾的 Academic Service 展示
 - News：`_news/`
 - Publications：`_bibliography/papers.bib`
 - 视觉样式：`_sass/_custom.scss`
