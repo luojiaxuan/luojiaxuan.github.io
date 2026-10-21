@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cascade Voice Consistency</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1d1d1f; --muted: #6e6e73; --line: #e5e5ea; --card: #f7f7f9; --accent: #2f6fde;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111214; --fg: #ececf1; --muted: #a1a1aa; --line: #2c2d31; --card: #1a1b1e; --accent: #7aa7ff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 12px; }
+  h2 { font-size: 1.15rem; margin: 32px 0 8px; }
+  p { margin: 8px 0; }
+  .muted { color: var(--muted); font-size: 0.92rem; }
+  .clip { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+  .clip h3 { font-size: 1rem; margin: 0 0 4px; }
+  .clip p { margin: 0 0 10px; color: var(--muted); font-size: 0.92rem; }
+  audio { width: 100%; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; white-space: normal; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Cascade voice consistency: before and after</h1>
+  <p>A streaming voice cascade (speech recognition, a language model, then Qwen3-TTS) speaks every sentence of every reply as its own TTS request, and each request is sampled with a fresh seed. With a built-in CustomVoice speaker, the only thing tying the requests together is a speaker token, so the voice moves from sentence to sentence and from turn to turn.</p>
+  <p>The fix clones one 5.4 s recording of the same speaker with Qwen3-TTS Base for every request. Each file below plays the same six replies (three sentences each) back to back, with 0.8 s between replies.</p>
+
+  <div class="clip">
+    <h3>Anchor recording</h3>
+    <p>CustomVoice speaker Vivian, seed 1234. Every request in the "after" files clones this clip.</p>
+    <audio controls preload="none" src="https://huggingface.co/datasets/gavinlaw/sglang-omni-fdb-native-runs/resolve/eaddb3f70578a7635f9b66949708d31f8780f52c/20261020-cascade-voice-anchor/listen/0-anchor-vivian.mp3"></audio>
+  </div>
+  <div class="clip">
+    <h3>1. Before: CustomVoice, one request per sentence</h3>
+    <p>What the cascade did. Listen for the timbre changing between replies.</p>
+    <audio controls preload="none" src="https://huggingface.co/datasets/gavinlaw/sglang-omni-fdb-native-runs/resolve/eaddb3f70578a7635f9b66949708d31f8780f52c/20261020-cascade-voice-anchor/listen/1-before-customvoice-per-sentence.mp3"></audio>
+  </div>
+  <div class="clip">
+    <h3>2. After: Base cloning the anchor, one request per sentence</h3>
+    <p>The change. Requests are still independent; each one is conditioned on the same recording.</p>
+    <audio controls preload="none" src="https://huggingface.co/datasets/gavinlaw/sglang-omni-fdb-native-runs/resolve/eaddb3f70578a7635f9b66949708d31f8780f52c/20261020-cascade-voice-anchor/listen/2-after-anchor-per-sentence.mp3"></audio>
+  </div>
+  <div class="clip">
+    <h3>3. Next step: the anchor plus one generation per reply</h3>
+    <p>Each reply spoken in one request, so the sentences of a reply also share prosody.</p>
+    <audio controls preload="none" src="https://huggingface.co/datasets/gavinlaw/sglang-omni-fdb-native-runs/resolve/eaddb3f70578a7635f9b66949708d31f8780f52c/20261020-cascade-voice-anchor/listen/3-anchor-plus-one-request-per-reply.mp3"></audio>
+  </div>
+  <div class="clip">
+    <h3>4. Rejected: clone the previous sentence instead of the anchor</h3>
+    <p>Smooth from one sentence to the next, but the voice drifts away over a session.</p>
+    <audio controls preload="none" src="https://huggingface.co/datasets/gavinlaw/sglang-omni-fdb-native-runs/resolve/eaddb3f70578a7635f9b66949708d31f8780f52c/20261020-cascade-voice-anchor/listen/4-rejected-chain-drift.mp3"></audio>
+  </div>
+
+  <h2>Numbers</h2>
+  <p class="muted">Speaker similarity is WavLM-large ECAPA cosine x 100 on the middle 3 s of each clip. Within: between the sentences of one reply. Across: between sentences of different replies. Consistency: each reply against the mean of all other replies. 18 replies per row; WER from Whisper large-v3-turbo.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Condition</th><th>Within</th><th>Across</th><th>Consistency</th><th>WER</th></tr></thead>
+    <tbody>
+      <tr><td>1. CustomVoice, one request per sentence</td><td>48.2</td><td>50.1</td><td>67.8</td><td>2.38%</td></tr>
+      <tr><td>CustomVoice, one request per reply</td><td>59.2</td><td>51.0</td><td>71.5</td><td>2.23%</td></tr>
+      <tr><td>2. Base cloning the anchor, per sentence</td><td>65.2</td><td>67.5</td><td>81.3</td><td>1.93%</td></tr>
+      <tr><td>3. Base cloning the anchor, per reply</td><td>70.6</td><td>67.2</td><td>83.7</td><td>1.79%</td></tr>
+      <tr><td>4. Base cloning the previous sentence</td><td>74.9</td><td>53.3</td><td>73.6</td><td>1.79%</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="muted">Anchors from 1.7 s to 15.5 s, and three different takes of the anchor text, all give 79 to 83 consistency. First audio from the TTS service goes from 32.5 to 44.7 ms (median, one request at a time).</p>
+  <p class="muted">Clips, scores and scripts: <a href="https://huggingface.co/datasets/gavinlaw/sglang-omni-fdb-native-runs/tree/2d5ce31562daaf43187ec07170721eb1c0305ae7/20261020-cascade-voice-anchor">gavinlaw/sglang-omni-fdb-native-runs</a>.</p>
+</main>
+</body>
+</html>
