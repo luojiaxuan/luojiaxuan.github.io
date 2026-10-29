@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RASST Replay</title>
+<meta name="description" content="Recorded streaming output of RASST (EMNLP 2026) replayed in sync with real lecture audio, next to the same talks translated without a glossary.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="RASST replay: streaming speech translation with a glossary">
+<meta property="og:description" content="Recorded streaming output of RASST (EMNLP 2026) replayed in sync with real lecture audio, next to the same talks translated without a glossary.">
+<meta property="og:url" content="https://luojiaxuan.github.io/demos/rasst/">
+<meta property="og:image" content="https://luojiaxuan.github.io/demos/rasst/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;600&family=Noto+Sans+SC:wght@400;600&family=Schibsted+Grotesk:wght@600;800&display=swap">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+/* note (luojiaxuan): layout is an interpreter's console. Use-case tabs, then one stage: the speaker's caption on top,
+   two output feeds side by side, and the per-chunk glossary log underneath. */
+:root {
+  --bg: #eceff2;
+  --surface: #fbfcfd;
+  --surface-2: #f2f5f7;
+  --ink: #16212b;
+  --muted: #5a6876;
+  --line: #d3dbe2;
+  --glossary: #a35f00;
+  --glossary-soft: #fbecd2;
+  --good: #11704a;
+  --good-soft: #d7f0e3;
+  --bad: #b93216;
+  --bad-soft: #fbe0d8;
+  --display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Atkinson Hyperlegible", "Helvetica Neue", Arial, sans-serif;
+  --cjk-sc: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --cjk-jp: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1217; --surface: #131c23; --surface-2: #18232c; --ink: #e6ecf1; --muted: #8d9cab; --line: #25323d;
+    --glossary: #f0b04a; --glossary-soft: #3a2a10; --good: #5fd49a; --good-soft: #10301f; --bad: #ff8e70; --bad-soft: #3d1a12;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1217; --surface: #131c23; --surface-2: #18232c; --ink: #e6ecf1; --muted: #8d9cab; --line: #25323d;
+  --glossary: #f0b04a; --glossary-soft: #3a2a10; --good: #5fd49a; --good-soft: #10301f; --bad: #ff8e70; --bad-soft: #3d1a12;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+.page {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 40px;
+  display: grid; gap: 22px;
+}
+.label {
+  font-family: var(--body); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+}
+
+.masthead { display: grid; gap: 8px; }
+.masthead h1 { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 4.4vw, 44px); line-height: 1.05; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.masthead .lede { margin: 0; max-width: 66ch; color: var(--muted); font-size: 17px; }
+.masthead .links { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 15px; }
+a { color: var(--ink); text-underline-offset: 3px; text-decoration-color: var(--glossary); }
+a:hover { color: var(--glossary); }
+
+.cases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.case {
+  all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 4px; align-content: start;
+  padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2);
+}
+.case:hover { border-color: var(--muted); }
+.case:focus-visible { outline: 2px solid var(--glossary); outline-offset: 2px; }
+.case[aria-selected="true"] { background: var(--surface); border-color: var(--ink); }
+.case .k { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.case .h { font-family: var(--display); font-weight: 600; font-size: 16px; line-height: 1.25; }
+
+.stage {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  display: grid; gap: 18px; padding: 20px;
+}
+.stage-head { display: grid; gap: 4px; }
+.stage-head h2 { font-family: var(--display); font-weight: 800; font-size: clamp(22px, 3vw, 30px); line-height: 1.12; margin: 0; text-wrap: balance; }
+.stage-head p { margin: 0; color: var(--muted); max-width: 70ch; }
+
+.transport { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.play {
+  all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: 999px; background: var(--ink); color: var(--surface); font-weight: 700; font-size: 15px;
+}
+.play:focus-visible { outline: 2px solid var(--glossary); outline-offset: 2px; }
+.play svg { width: 14px; height: 14px; fill: currentColor; }
+.scrub { flex: 1 1 220px; min-width: 0; accent-color: var(--glossary); }
+.clock { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.source { border-left: 3px solid var(--glossary); padding: 4px 0 4px 14px; display: grid; gap: 4px; min-height: 5.6em; align-content: start; }
+.source .prev { margin: 0; color: var(--muted); font-size: 15px; }
+.source .now { margin: 0; font-size: 20px; line-height: 1.45; }
+.source u { text-decoration: none; background: var(--glossary-soft); color: var(--ink); border-bottom: 2px solid var(--glossary); padding: 0 2px; border-radius: 2px; }
+
+.outputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.out { min-width: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); display: grid; grid-template-rows: auto 1fr; }
+.out.rasst { border-color: var(--good); }
+.out > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; padding: 12px 14px 10px; border-bottom: 1px solid var(--line); }
+.out h3 { font-family: var(--display); font-weight: 800; font-size: 19px; margin: 0; }
+.out .who { display: block; color: var(--muted); font-size: 13px; }
+.score { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.score b { font-size: 22px; font-weight: 600; color: var(--ink); }
+.out.rasst .score b { color: var(--good); }
+.out.base .score b { color: var(--bad); }
+.text {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 1.1em); mask-image: linear-gradient(to bottom, transparent 0, #000 1.1em);
+  height: 15.5em; overflow-y: auto; padding: 12px 14px 14px; font-size: 19px; line-height: 2.25;
+  overflow-wrap: anywhere; scrollbar-width: thin;
+}
+.text:lang(zh) { font-family: var(--cjk-sc); }
+.text:lang(ja) { font-family: var(--cjk-jp); }
+.text:lang(de) { line-height: 2.05; hyphens: auto; }
+.text .gap { color: var(--muted); }
+mark { position: relative; color: inherit; background: transparent; border-radius: 3px; padding: 1px 2px; white-space: nowrap; }
+mark .g {
+  position: absolute; left: 0; bottom: calc(100% - 0.35em); white-space: nowrap;
+  font-family: var(--body); font-size: 0.52em; line-height: 1.2; font-weight: 700; letter-spacing: 0.01em; pointer-events: none;
+}
+mark .g.end { left: auto; right: 0; }
+mark.good { box-shadow: inset 0 -2px 0 var(--good); }
+mark.good.key { background: var(--good-soft); }
+mark.good .g { color: var(--good); }
+mark.bad { background: var(--bad-soft); box-shadow: inset 0 -2px 0 var(--bad); }
+mark.bad .g { color: var(--bad); }
+.caret { display: inline-block; width: 0.5em; height: 1em; vertical-align: -0.12em; background: var(--muted); opacity: 0.55; margin-left: 2px; border-radius: 1px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+.legend .lg { box-shadow: inset 0 -2px 0 var(--good); }
+.legend .lk { background: var(--good-soft); box-shadow: inset 0 -2px 0 var(--good); }
+.legend .lb { background: var(--bad-soft); box-shadow: inset 0 -2px 0 var(--bad); }
+.legend .ls { background: var(--glossary-soft); box-shadow: inset 0 -2px 0 var(--glossary); }
+
+.lookups { display: grid; gap: 8px; }
+.lookups-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; }
+.lookup-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; min-height: 92px; }
+.lookup { min-width: 0; border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 4px; align-content: start; background: var(--surface); }
+.lookup:first-child { border-style: solid; border-color: var(--glossary); }
+.lookup .meta { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; justify-content: space-between; gap: 8px; }
+.ref { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px; font-size: 14px; line-height: 1.35; }
+.ref .pair { min-width: 0; overflow-wrap: anywhere; }
+.ref .pair .tr:lang(zh) { font-family: var(--cjk-sc); }
+.ref .pair .tr:lang(ja) { font-family: var(--cjk-jp); }
+.ref .st { font-family: var(--mono); font-size: 11px; white-space: nowrap; color: var(--muted); align-self: center; }
+.ref.used .st { color: var(--good); font-weight: 600; }
+.ref.skipped .pair { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+.lookup-empty { color: var(--muted); font-size: 14px; grid-column: 1 / -1; align-self: center; }
+
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 28px; color: var(--muted); font-size: 15px; }
+.notes h3 { font-family: var(--display); font-size: 16px; color: var(--ink); margin: 0 0 4px; }
+.notes p { margin: 0; max-width: 62ch; }
+
+@media (max-width: 860px) {
+  .cases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lookup-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lookup:nth-child(n+3) { display: none; }
+}
+@media (max-width: 640px) {
+  .outputs, .notes { grid-template-columns: minmax(0, 1fr); }
+  .stage { padding: 14px; }
+  .text { height: 12em; font-size: 18px; }
+  .source .now { font-size: 18px; }
+}
+
+/* note (luojiaxuan): video mode is a fixed 1920x1080 frame rendered frame by frame. */
+html.video body { overflow: hidden; }
+html.video .masthead, html.video .cases, html.video .transport, html.video .notes, html.video .lookups-head .range { display: none; }
+html.video .page { max-width: none; width: 1920px; height: 1080px; padding: 34px 56px 36px; gap: 18px; grid-template-rows: auto 1fr; box-sizing: border-box; }
+html.video .brandbar { display: flex; }
+html.video .stage { border: 0; background: transparent; padding: 0; gap: 16px; min-height: 0; overflow: hidden; grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+html.video .out { grid-template-rows: auto minmax(0, 1fr); }
+html.video .stage-head h2 { font-size: 44px; }
+html.video .stage-head p { font-size: 22px; max-width: none; }
+html.video .stage-head .label { font-size: 17px; }
+html.video .source { min-height: 0; padding: 6px 0 6px 20px; border-left-width: 4px; }
+html.video .source .prev { font-size: 21px; }
+html.video .source .now { font-size: 29px; }
+html.video .legend { font-size: 18px; }
+html.video .legend i { width: 20px; height: 13px; }
+html.video .out h3 { font-size: 30px; }
+html.video .out .who { font-size: 18px; }
+html.video .out > header { padding: 16px 22px 12px; }
+html.video .score { font-size: 18px; }
+html.video .score b { font-size: 38px; }
+html.video .text { height: auto; min-height: 0; font-size: 32px; line-height: 2.2; padding: 14px 22px; overflow: hidden; }
+html.video .text:lang(de) { font-size: 28px; line-height: 2.05; }
+html.video .outputs { min-height: 0; }
+html.video .out { min-height: 0; }
+html.video .lookup-list { grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: 0; height: 124px; gap: 12px; }
+html.video .lookup { overflow: hidden; padding: 10px 14px; }
+html.video .lookups { gap: 10px; }
+html.video .lookups .label { font-size: 16px; }
+html.video .lookup .meta { font-size: 16px; }
+html.video .ref { font-size: 20px; }
+html.video .ref .st { font-size: 15px; }
+.brandbar { display: none; justify-content: space-between; align-items: baseline; gap: 20px; }
+.brandbar .name { font-family: var(--display); font-weight: 800; font-size: 34px; letter-spacing: -0.01em; }
+.brandbar .name span { font-weight: 600; color: var(--muted); font-size: 24px; margin-left: 14px; letter-spacing: 0; }
+.brandbar .tag { font-family: var(--mono); font-size: 18px; color: var(--muted); }
+
+.card { display: none; }
+html.video.show-card .page { display: none; }
+html.video.show-card .card { display: grid; position: fixed; inset: 0; width: 1920px; height: 1080px; place-content: center; gap: 26px; padding: 0 200px; box-sizing: border-box; background: var(--bg); }
+.card .eyebrow { font-family: var(--mono); font-size: 24px; color: var(--glossary); letter-spacing: 0.04em; }
+.card h1 { font-family: var(--display); font-weight: 800; font-size: 120px; line-height: 1; margin: 0; letter-spacing: -0.02em; }
+.card h2 { font-family: var(--display); font-weight: 600; font-size: 48px; line-height: 1.15; margin: 0; max-width: 24ch; text-wrap: balance; }
+.card p { font-size: 30px; line-height: 1.45; margin: 0; color: var(--muted); max-width: 52ch; }
+.card .big { display: flex; gap: 70px; }
+.card .big div { display: grid; gap: 4px; }
+.card .big b { font-family: var(--display); font-size: 110px; line-height: 1; color: var(--good); }
+.card .big span { font-size: 28px; color: var(--muted); }
+.card .links { font-family: var(--mono); font-size: 30px; color: var(--ink); display: grid; gap: 8px; }
+.card .credit { font-size: 20px; }
+
+@media (prefers-reduced-motion: reduce) { .caret { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="brandbar"><div class="name">RASST<span>retrieval-augmented streaming speech translation</span></div><div class="tag">replay of recorded output · 1.92 s chunks</div></div>
+
+  <header class="masthead">
+    <p class="label">EMNLP 2026 · retrieval-augmented streaming speech translation</p>
+    <h1>RASST replay</h1>
+    <p class="lede">Four moments from real lectures. Both systems hear the same audio, 1.92 seconds at a time, and RASST also looks up a glossary for every chunk. The text below is the recorded output from the paper's evaluation runs, shown at the moment each system produced it.</p>
+    <div class="links"><a href="https://arxiv.org/abs/2601.22777">Paper (arXiv)</a><a href="https://github.com/LeiLiLab/RASST">Code and models</a></div>
+  </header>
+
+  <nav class="cases" role="tablist" aria-label="Use cases" id="cases"></nav>
+
+  <section class="stage" aria-labelledby="clip-title">
+    <div class="stage-head">
+      <span class="label" id="clip-kind"></span>
+      <h2 id="clip-title"></h2>
+      <p id="clip-summary"></p>
+    </div>
+
+    <div class="transport">
+      <button class="play" id="play" type="button"><svg viewBox="0 0 14 14" aria-hidden="true"><path id="play-icon" d="M2 1l11 6-11 6z"/></svg><span id="play-label">Play with sound</span></button>
+      <input class="scrub" id="scrub" type="range" min="0" max="1000" value="1000" step="1" aria-label="Position in clip">
+      <span class="clock" id="clock"></span>
+    </div>
+
+    <div class="source" aria-label="What the speaker says">
+      <span class="label">Speaker · English</span>
+      <p class="prev" id="src-prev"></p>
+      <p class="now" id="src-now"></p>
+    </div>
+
+    <div class="legend">
+      <span><i class="ls"></i>glossary term in the speech</span>
+      <span><i class="lg"></i>right term</span>
+      <span><i class="lk"></i>right term where the two systems differ, English term above</span>
+      <span><i class="lb"></i>wrong term, with what it actually says</span>
+    </div>
+
+    <div class="outputs">
+      <article class="out base">
+        <header><div><h3>Without glossary</h3><span class="who">InfiniSST, our IWSLT 2025 system</span></div><span class="score" id="score-base"></span></header>
+        <div class="text" id="text-base"></div>
+      </article>
+      <article class="out rasst">
+        <header><div><h3>RASST</h3><span class="who" id="rasst-who"></span></div><span class="score" id="score-rasst"></span></header>
+        <div class="text" id="text-rasst"></div>
+      </article>
+    </div>
+
+    <div class="lookups">
+      <div class="lookups-head"><span class="label">RASST glossary lookups · one per 1.92 s chunk, newest first</span><span class="clock range" id="lookup-range"></span></div>
+      <ol class="lookup-list" id="lookups"></ol>
+    </div>
+  </section>
+
+  <section class="notes" aria-label="About this replay">
+    <div>
+      <h3>How the replay works</h3>
+      <p>Each clip is cut from a full talk that both systems translated end to end during evaluation, at latency multiplier 2 (1.92-second chunks, about two seconds behind the speaker). Text appears at the point in the audio where the system produced it in that run, and the lookup log shows the glossary entries RASST retrieved for each chunk, how long the lookup took, and whether the translation then used the entry. Nothing here runs live.</p>
+    </div>
+    <div>
+      <h3>How terms are counted</h3>
+      <p>A term counts as right when the glossary's translation appears in the system's output for the clip, the same exact-form rule as the paper's term accuracy. The counts describe these clips only. Across full test sets, RASST gets 81% of oncology terms and 86% of NLP-talk terms right at this latency. Audio: <span id="credits"></span>.</p>
+    </div>
+  </section>
+</div>
+
+<div class="card" id="card"></div>
+
+<script>window.RASST_CLIPS = [{"id": "oncology-zh", "domain": "Oncology lecture", "headline": "A drug name that must not change", "summary": "A breast-cancer lecture discusses the Impassion-131 trial of atezolizumab. Without a glossary, the model writes a different drug.", "lang": "zh", "langName": "Chinese", "dataset": "ESO oncology test set", "credit": "ESO speech dataset (Iranzo-Sánchez et al., 2025)", "talkClock": 736.3, "duration": 48.7, "glossarySize": 212, "audio": "audio/oncology-zh.mp3", "sentences": [{"s": 0.02, "e": 14.41, "text": "And then next trial they did, Impassion-131, didn't show a benefit adding atezolizumab for very unclear reasons, since we saw these data very encouraging with pembrolizumab and encouraging data in the early-stage setting.", "terms": [["atezolizumab", "阿替利珠单抗"], ["Impassion-131", "Impassion-131"], ["pembrolizumab", "帕博利珠单抗"]]}, {"s": 14.8, "e": 21.62, "text": "So, that led to actually withdrawal of the US-accelerated approval of atezolizumab in the metastatic setting.", "terms": [["atezolizumab", "阿替利珠单抗"]]}, {"s": 21.77, "e": 32.3, "text": "There is one ongoing study still looking at atezolizumab in the metastatic setting in a phase III trial and approval was not withdrawn in other countries because this was not a requirement.", "terms": [["atezolizumab", "阿替利珠单抗"]]}, {"s": 32.3, "e": 38.76, "text": "It was from the USFDA but it, certainly, I think, has resulted in less use of atezolizumab in this setting.", "terms": [["atezolizumab", "阿替利珠单抗"]]}, {"s": 39.33, "e": 45.65, "text": "I show you these data here from the different trial, is the Impassion-131, the negative trial.", "terms": [["Impassion-131", "Impassion-131"]]}], "base": [[980, "完全批准。接下来的"], [2900, "试验是PASI0N-131。"], [4820, "该试验并未显示出添加"], [6740, "特瑞普利单抗的获益，原因尚不明确"], [8660, "，因为我们看到的数据"], [10580, "在"], [12500, "使用帕博利珠单抗时非常令人鼓舞，"], [14420, "且在早期阶段的数据也显示令人鼓舞。"], [16340, "这导致"], [18260, "美国"], [20180, "加速批准特瑞普利单抗的决定被撤销，"], [22100, "在转移性疾病领域。"], [24020, "目前有一项正在进行的"], [25940, "研究仍在评估特瑞普利单抗在"], [27860, "转移性疾病中的疗效，这是一项Ⅲ期试验。"], [29780, "但"], [31700, "在其他国家，批准并未被撤销，因为这并非"], [33620, "一项强制要求，而是美国"], [35540, "食品药品监督管理局（FDA）的要求。但我认为，这无疑"], [37460, "导致了特瑞普利单抗的使用减少。"], [39380, "在此背景下。"], [41300, "我向大家展示来自"], [43220, "不同试验的数据，"], [45140, "包括PASI0N-131试验的阴性"], [47060, "结果。正如你们所"]], "rasst": [[980, "全面批准。"], [2900, "接下来他们开展的Impassion-131试验，"], [4820, "结果显示，添加"], [6740, "阿替利珠单抗并未带来获益，原因尚不明确"], [8660, "，因为我们看到的数据"], [10580, "在"], [12500, "使用帕博利珠单抗时非常令人鼓舞，"], [14420, "在早期阶段"], [16340, "也显示出积极的数据。这导致"], [18260, "美国"], [20180, "最终撤销了阿替利珠单抗的加速批准，"], [22100, "该撤销针对的是转移性情况。"], [24020, "目前有一项正在进行的"], [25940, "研究仍在评估阿替利珠单抗在"], [27860, "转移性情况下的效果，属于三期临床试验。"], [29780, "但"], [31700, "在其他国家并未撤销批准，因为这并非"], [33620, "一项强制要求，而是美国食品药品监督管理局的"], [35540, "决定。不过，我认为"], [37460, "这确实导致了"], [39380, "在此情况下阿替利珠单抗的使用减少。"], [41300, "我在这里向你们展示"], [43220, "来自不同试验的数据，"], [45140, "包括Impassion-131试验的"], [47060, "阴性结果。正如"]], "lookups": [{"ms": 980, "ragMs": 46, "refs": []}, {"ms": 2900, "ragMs": 51, "refs": [{"term": "Impassion-131", "tr": "Impassion-131", "score": 0.836, "usedMs": 2900}, {"term": "Impassion-130", "tr": "Impassion-130", "score": 0.805, "usedMs": null}]}, {"ms": 4820, "ragMs": 49, "refs": []}, {"ms": 6740, "ragMs": 52, "refs": [{"term": "atezolizumab", "tr": "阿替利珠单抗", "score": 0.862, "usedMs": 6740}]}, {"ms": 8660, "ragMs": 49, "refs": []}, {"ms": 10580, "ragMs": 54, "refs": []}, {"ms": 12500, "ragMs": 47, "refs": [{"term": "pembrolizumab", "tr": "帕博利珠单抗", "score": 0.943, "usedMs": 12500}]}, {"ms": 14420, "ragMs": 53, "refs": [{"term": "early-stage setting", "tr": "早期阶段", "score": 0.951, "usedMs": 14420}, {"term": "pembrolizumab", "tr": "帕博利珠单抗", "score": 0.818, "usedMs": null}]}, {"ms": 16340, "ragMs": 50, "refs": [{"term": "early-stage setting", "tr": "早期阶段", "score": 0.95, "usedMs": null}]}, {"ms": 18260, "ragMs": 55, "refs": []}, {"ms": 20180, "ragMs": 46, "refs": [{"term": "atezolizumab", "tr": "阿替利珠单抗", "score": 0.856, "usedMs": 20180}, {"term": "sacituzumab", "tr": "戈沙妥珠单抗", "score": 0.782, "usedMs": null}]}, {"ms": 22100, "ragMs": 48, "refs": [{"term": "atezolizumab", "tr": "阿替利珠单抗", "score": 0.881, "usedMs": 25940}]}, {"ms": 24020, "ragMs": 37, "refs": []}, {"ms": 25940, "ragMs": 46, "refs": [{"term": "atezolizumab", "tr": "阿替利珠单抗", "score": 0.858, "usedMs": 25940}, {"term": "sacituzumab", "tr": "戈沙妥珠单抗", "score": 0.789, "usedMs": null}]}, {"ms": 27860, "ragMs": 53, "refs": []}, {"ms": 29780, "ragMs": 52, "refs": []}, {"ms": 31700, "ragMs": 41, "refs": []}, {"ms": 33620, "ragMs": 48, "refs": [{"term": "USFDA", "tr": "美国食品药品监督管理局", "score": 0.926, "usedMs": 33620}]}, {"ms": 35540, "ragMs": 54, "refs": [{"term": "USFDA", "tr": "美国食品药品监督管理局", "score": 0.94, "usedMs": null}]}, {"ms": 37460, "ragMs": 34, "refs": []}, {"ms": 39380, "ragMs": 42, "refs": [{"term": "atezolizumab", "tr": "阿替利珠单抗", "score": 0.854, "usedMs": 39380}]}, {"ms": 41300, "ragMs": 36, "refs": []}, {"ms": 43220, "ragMs": 47, "refs": []}, {"ms": 45140, "ragMs": 44, "refs": [{"term": "Impassion-131", "tr": "Impassion-131", "score": 0.857, "usedMs": 45140}, {"term": "Impassion-130", "tr": "Impassion-130", "score": 0.826, "usedMs": null}]}, {"ms": 47060, "ragMs": 54, "refs": []}], "notes": [{"side": "base", "text": "特瑞普利单抗", "gloss": "toripalimab, a different drug"}, {"side": "base", "text": "PASI0N-131", "gloss": "garbled trial name"}]}, {"id": "oncology-ja", "domain": "Oncology lecture", "headline": "The same passage into Japanese", "summary": "Same lecture, same moment. Without a glossary, atezolizumab turns into a drug name that does not exist.", "lang": "ja", "langName": "Japanese", "dataset": "ESO oncology test set", "credit": "ESO speech dataset (Iranzo-Sánchez et al., 2025)", "talkClock": 736.3, "duration": 48.7, "glossarySize": 212, "audio": "audio/oncology-ja.mp3", "sentences": [{"s": 0.02, "e": 14.41, "text": "And then next trial they did, Impassion-131, didn't show a benefit adding atezolizumab for very unclear reasons, since we saw these data very encouraging with pembrolizumab and encouraging data in the early-stage setting.", "terms": [["atezolizumab", "アテゾリズマブ"], ["Impassion-131", "Impassion-131"], ["pembrolizumab", "ペムブロリズマブ"]]}, {"s": 14.8, "e": 21.62, "text": "So, that led to actually withdrawal of the US-accelerated approval of atezolizumab in the metastatic setting.", "terms": [["atezolizumab", "アテゾリズマブ"]]}, {"s": 21.77, "e": 32.3, "text": "There is one ongoing study still looking at atezolizumab in the metastatic setting in a phase III trial and approval was not withdrawn in other countries because this was not a requirement.", "terms": [["atezolizumab", "アテゾリズマブ"]]}, {"s": 32.3, "e": 38.76, "text": "It was from the USFDA but it, certainly, I think, has resulted in less use of atezolizumab in this setting.", "terms": [["atezolizumab", "アテゾリズマブ"]]}, {"s": 39.33, "e": 45.65, "text": "I show you these data here from the different trial, is the Impassion-131, the negative trial.", "terms": [["Impassion-131", "Impassion-131"]]}], "base": [[980, "することで完全承認を得る必要がありました。そして次"], [2900, "の試験として、IMPASSION131が行われました。"], [4820, "その結果、"], [8660, "なぜか明確な理由はわからないものの、テセリズマブを追加しても効果は見られませんでした。なぜなら、"], [10580, "私"], [12500, "たちはペムブロリズマブのデータにおいて非常に有望な結果を確認していたからです。"], [14420, "また、早期段階での設定においても、有望なデータが得られていたからです。"], [16340, "そ"], [18260, "の結果、米国"], [20180, "におけるテセリズマブの優先承認が実際には取り消されることになりました。"], [22100, "転移性設定においてです。"], [24020, "現在、1件の治験が進行中です。"], [25940, "それは転移性設定におけるテセリズマブの効"], [27860, "果を検証する第3相試験です。"], [29780, "しかし、承認は"], [31700, "他の国では取り消されませんでした。これは"], [33620, "米国"], [35540, "FDAからの要件ではなかったためです。しかし、確かに"], [37460, "、テセリズマブの使用が減少したことは間違いないと思います。"], [39380, "この状況では、テセリズマブの使用が減ったのです。"], [41300, "ここに示すデータは、"], [43220, "さまざまな試験からのものです。"], [45140, "IMPASSION131試験、"], [47060, "否定的な結果を出した試験です。この試験は、ご"]], "rasst": [[980, "完全な承認を得るためには、"], [2900, "次に実施したImpassion-131試験で"], [4820, "は、アテゾリズマブを追加しても効果が認められませんでした。"], [6740, "非常に明確でない"], [8660, "理由のため、このデータ"], [10580, "が非常に前向きに見えたにもかかわらずです。"], [12500, "ペムブロリズマブのデータにおいても、"], [14420, "早期段階でのデータも前向きでした。"], [16340, "その結果、"], [18260, "アメリカ"], [20180, "でアテゾリズマブの優先承認が撤回されることになりました。"], [22100, "転移性設定においてです。"], [24020, "現在も進行中の研究"], [25940, "が、転移"], [27860, "性設定においてアテゾリズマブを検討しており、第3相試験です。"], [29780, "承認は"], [31700, "他の国では撤回されませんでした。こ"], [33620, "れは米国食品医薬品局（米国食品医薬品局）の要件ではなかったためです。"], [35540, "しかし、私"], [37460, "は確かに、これによりアテゾリズマブの使用が減"], [39380, "少したと考えます。"], [41300, "ここに示すのは、"], [43220, "さまざまな試験からのデータです。"], [45140, "Impassion-131は"], [47060, "否定的な試験です。この試験"]], "lookups": [{"ms": 980, "ragMs": 59, "refs": []}, {"ms": 2900, "ragMs": 59, "refs": [{"term": "Impassion-131", "tr": "Impassion-131", "score": 0.836, "usedMs": 2900}, {"term": "Impassion-130", "tr": "Impassion-130", "score": 0.805, "usedMs": null}]}, {"ms": 4820, "ragMs": 59, "refs": []}, {"ms": 6740, "ragMs": 58, "refs": [{"term": "atezolizumab", "tr": "アテゾリズマブ", "score": 0.862, "usedMs": null}]}, {"ms": 8660, "ragMs": 58, "refs": []}, {"ms": 10580, "ragMs": 57, "refs": []}, {"ms": 12500, "ragMs": 59, "refs": [{"term": "pembrolizumab", "tr": "ペムブロリズマブ", "score": 0.943, "usedMs": 12500}]}, {"ms": 14420, "ragMs": 59, "refs": [{"term": "early-stage setting", "tr": "早期段階", "score": 0.951, "usedMs": 14420}, {"term": "pembrolizumab", "tr": "ペムブロリズマブ", "score": 0.818, "usedMs": null}]}, {"ms": 16340, "ragMs": 57, "refs": [{"term": "early-stage setting", "tr": "早期段階", "score": 0.95, "usedMs": null}]}, {"ms": 18260, "ragMs": 59, "refs": []}, {"ms": 20180, "ragMs": 58, "refs": [{"term": "atezolizumab", "tr": "アテゾリズマブ", "score": 0.856, "usedMs": 20180}, {"term": "sacituzumab", "tr": "サシツズマブ", "score": 0.782, "usedMs": null}]}, {"ms": 22100, "ragMs": 58, "refs": [{"term": "atezolizumab", "tr": "アテゾリズマブ", "score": 0.881, "usedMs": null}]}, {"ms": 24020, "ragMs": 57, "refs": []}, {"ms": 25940, "ragMs": 119, "refs": [{"term": "atezolizumab", "tr": "アテゾリズマブ", "score": 0.858, "usedMs": 27860}, {"term": "sacituzumab", "tr": "サシツズマブ", "score": 0.789, "usedMs": null}]}, {"ms": 27860, "ragMs": 127, "refs": []}, {"ms": 29780, "ragMs": 57, "refs": []}, {"ms": 31700, "ragMs": 57, "refs": []}, {"ms": 33620, "ragMs": 58, "refs": [{"term": "USFDA", "tr": "米国食品医薬品局", "score": 0.926, "usedMs": 33620}]}, {"ms": 35540, "ragMs": 57, "refs": [{"term": "USFDA", "tr": "米国食品医薬品局", "score": 0.94, "usedMs": null}]}, {"ms": 37460, "ragMs": 57, "refs": []}, {"ms": 39380, "ragMs": 58, "refs": [{"term": "atezolizumab", "tr": "アテゾリズマブ", "score": 0.854, "usedMs": null}]}, {"ms": 41300, "ragMs": 57, "refs": []}, {"ms": 43220, "ragMs": 57, "refs": []}, {"ms": 45140, "ragMs": 57, "refs": [{"term": "Impassion-131", "tr": "Impassion-131", "score": 0.857, "usedMs": 45140}, {"term": "Impassion-130", "tr": "Impassion-130", "score": 0.826, "usedMs": null}]}, {"ms": 47060, "ragMs": 56, "refs": []}], "notes": [{"side": "base", "text": "テセリズマブ", "gloss": "garbled drug name"}]}, {"id": "oncology-de", "domain": "Oncology lecture", "headline": "Response criteria, spelled right", "summary": "Brain-metastasis response is measured with RECIST and RANO. Without a glossary, the model writes the English word \"resist\".", "lang": "de", "langName": "German", "dataset": "ESO oncology test set", "credit": "ESO speech dataset (Iranzo-Sánchez et al., 2025)", "talkClock": 2091.2, "duration": 39.7, "glossarySize": 212, "audio": "audio/oncology-de.mp3", "sentences": [{"s": 0.01, "e": 2.9, "text": "Intracranial response rates are shown here in patients with brain mets.", "terms": []}, {"s": 2.9, "e": 5.39, "text": "So, they actually look to see if the brain mets have shrunk further.", "terms": []}, {"s": 5.49, "e": 12.62, "text": "Now, you can't take away the long-term effects of radiation but still, that dramatic improvement, almost a doubling, is pretty encouraging.", "terms": []}, {"s": 13.62, "e": 18.01, "text": "This shows you the intracranial response, again, using RECIST 1.1.", "terms": [["RECIST", "RECIST"], ["RECIST 1.1", "RECIST 1.1"]]}, {"s": 18.44, "e": 22.54, "text": "And you can see how much better it is for T-DM1 versus T-DXd.", "terms": []}, {"s": 24.32, "e": 32.42, "text": "Actually, I wanted to bring up one thing that's important to think about in brain mets is that people don't think that RECIST is maybe the best way or the volumetric response.", "terms": [["RECIST", "RECIST"]]}], "base": [[1600, "Intrakranielle Ansprechraten werden"], [3520, "hier bei Patienten mit Hirnmetastasen dargestellt. Sie schauen also tatsächlich"], [5440, ", ob sich die Hirnmetastasen weiter verkleinert haben."], [7360, "Jetzt können Sie die"], [9280, "langfristigen Auswirkungen der Strahlentherapie nicht wegnehmen,"], [11200, "Aber trotzdem, diese dramatische Verbesserung, fast"], [13120, "eine Verdopplung, ist ziemlich ermutigend."], [15040, "Dies zeigt Ihnen die intrakraniellen"], [16960, "Ansprechraten erneut."], [18880, "Verwenden Sie RESIST 1.1. Und Sie"], [20800, "können sehen, wie viel besser es für TDM1 ist."], [22720, "Im Vergleich zu CDXc."], [26560, "Wir"], [28480, "wollten eigentlich noch etwas ansprechen, das bei Hirnmetastasen wichtig ist, nämlich dass"], [30400, "Menschen nicht denken, dass RESIST"], [32320, "möglicherweise die beste Methode ist oder die volumetrische"], [34240, "Ansprechr"], [36160, "ate nach REINO-Kriterien eine Möglichkeit ist, die volumetrische"], [38080, "Ansprechraten zu betrachten,und es zeigt Ihnen,"]], "rasst": [[1600, ", intrakranielle Ansprechraten werden"], [3520, "hier bei Patienten mit Hirnmetastase dargestellt. Sie"], [5440, "schauen also, ob die Hirnmetastase weiter abgenommen hat,"], [7360, "Jetzt können Sie die"], [9280, "langfristigen Auswirkungen der Strahlentherapie nicht entfernen,"], [11200, "dennoch eine so dramatische Verbesserung, fast"], [13120, "eine Verdopplung, ist ziemlich ermutigend."], [15040, "Und dies zeigt Ihnen die intrakraniellen"], [16960, "Ansprechraten erneut,"], [18880, "unter Verwendung von RECIST 1.1. Und Sie"], [20800, "können sehen, wie viel besser es für"], [22720, "Trastuzumab-Emtansin im Vergleich zu Trastuzumab-Deruxtecan ist."], [24640, "Dass wir"], [26560, "tatsächlich, und ich möchte etwas ansprechen, das"], [28480, "bei Hirnmetastase wichtig ist, ist"], [30400, ", dass die Menschen nicht denken, dass RECIST"], [32320, "möglicherweise die beste Methode ist, oder die volumetrische"], [34240, "Ansprechraten. Daher"], [36160, "sind RANO-Ansprechkriterien eine Möglichkeit, die volumetrische"], [38080, "Ansprechraten zu betrachten, Und es zeigt"]], "lookups": [{"ms": 1600, "ragMs": 43, "refs": [{"term": "response rate", "tr": "Ansprechrate", "score": 0.871, "usedMs": 1600}, {"term": "RANO response criteria", "tr": "RANO-Ansprechkriterien", "score": 0.801, "usedMs": null}]}, {"ms": 3520, "ragMs": 37, "refs": [{"term": "brain met", "tr": "Hirnmetastase", "score": 0.911, "usedMs": 3520}, {"term": "response rate", "tr": "Ansprechrate", "score": 0.838, "usedMs": null}, {"term": "RANO response criteria", "tr": "RANO-Ansprechkriterien", "score": 0.794, "usedMs": null}]}, {"ms": 5440, "ragMs": 39, "refs": [{"term": "brain met", "tr": "Hirnmetastase", "score": 0.918, "usedMs": 5440}]}, {"ms": 7360, "ragMs": 41, "refs": []}, {"ms": 9280, "ragMs": 40, "refs": [{"term": "long-term outcomes", "tr": "Langzeitergebnis", "score": 0.847, "usedMs": null}]}, {"ms": 11200, "ragMs": 41, "refs": []}, {"ms": 13120, "ragMs": 37, "refs": []}, {"ms": 15040, "ragMs": 36, "refs": []}, {"ms": 16960, "ragMs": 42, "refs": [{"term": "response rate", "tr": "Ansprechrate", "score": 0.803, "usedMs": 16960}, {"term": "RANO response criteria", "tr": "RANO-Ansprechkriterien", "score": 0.797, "usedMs": null}]}, {"ms": 18880, "ragMs": 42, "refs": [{"term": "RECIST", "tr": "RECIST", "score": 0.9, "usedMs": 18880}]}, {"ms": 20800, "ragMs": 46, "refs": [{"term": "T-DM1", "tr": "Trastuzumab-Emtansin", "score": 0.871, "usedMs": 22720}, {"term": "TME", "tr": "totale mesorektale Exzision", "score": 0.818, "usedMs": null}]}, {"ms": 22720, "ragMs": 38, "refs": [{"term": "T-DM1", "tr": "Trastuzumab-Emtansin", "score": 0.901, "usedMs": 22720}, {"term": "ADC", "tr": "Antikörper-Wirkstoff-Konjugat", "score": 0.783, "usedMs": null}]}, {"ms": 24640, "ragMs": 41, "refs": []}, {"ms": 26560, "ragMs": 44, "refs": []}, {"ms": 28480, "ragMs": 38, "refs": [{"term": "brain met", "tr": "Hirnmetastase", "score": 0.898, "usedMs": 28480}]}, {"ms": 30400, "ragMs": 38, "refs": [{"term": "RECIST", "tr": "RECIST", "score": 0.91, "usedMs": 30400}, {"term": "brain met", "tr": "Hirnmetastase", "score": 0.84, "usedMs": null}]}, {"ms": 32320, "ragMs": 35, "refs": [{"term": "RECIST", "tr": "RECIST", "score": 0.903, "usedMs": null}, {"term": "response rate", "tr": "Ansprechrate", "score": 0.804, "usedMs": 34240}]}, {"ms": 34240, "ragMs": 38, "refs": [{"term": "RANO response criteria", "tr": "RANO-Ansprechkriterien", "score": 0.947, "usedMs": 36160}, {"term": "response rate", "tr": "Ansprechrate", "score": 0.832, "usedMs": 34240}]}, {"ms": 36160, "ragMs": 37, "refs": [{"term": "RANO response criteria", "tr": "RANO-Ansprechkriterien", "score": 0.962, "usedMs": 36160}]}, {"ms": 38080, "ragMs": 36, "refs": [{"term": "response rate", "tr": "Ansprechrate", "score": 0.821, "usedMs": 38080}]}], "notes": [{"side": "base", "text": "RESIST", "gloss": "should be RECIST"}, {"side": "base", "text": "REINO", "gloss": "should be RANO"}]}, {"id": "nlp-zh", "domain": "NLP conference talk", "headline": "A method name kept intact", "summary": "An ACL talk on question generation cites the retriever REALM. Without a glossary, the model writes RAG, a different method.", "lang": "zh", "langName": "Chinese", "dataset": "ACL 60/60 dev set", "credit": "ACL 60/60 (Salesky et al., 2023)", "talkClock": 263.7, "duration": 52.3, "glossarySize": 238, "audio": "audio/nlp-zh.mp3", "sentences": [{"s": -0.0, "e": 3.34, "text": "REALM retrieves the gold passage and answer in most cases.", "terms": [["REALM", "REALM"], ["answer", "回答"]]}, {"s": 3.5, "e": 8.2, "text": "However, in this work, we are more interested in the answers and context that it retrieves further down the line.", "terms": [["context", "上下文"]]}, {"s": 9.3, "e": 16.93, "text": "In the next step, question generation, we use these alternate answers and contexts to regenerate new questions that correspond to these alternatives.", "terms": [["question generation", "问题生成"], ["contexts", "上下文"], ["questions", "问题"]]}, {"s": 17.25, "e": 26.36, "text": "Question generation model is a pre trained text-to-text transformer that is fine-tuned on the NQ data to generate a question for an answer that's marked in context.", "terms": [["question generation", "问题生成"], ["model", "模型"], ["transformer", "转换器"], ["data", "数据"], ["question", "问题"], ["answer", "回答"], ["context", "上下文"]]}, {"s": 26.75, "e": 33.75, "text": "During inference we supply the question generation model, the alternative answer and context that we retrieved in the previous step.", "terms": [["inference", "推理"], ["question generation", "问题生成"], ["model", "模型"], ["answer", "回答"], ["context", "上下文"], ["retrieved", "检索"], ["previous", "前一个"]]}], "base": [[1260, "RAG检索"], [3180, "到黄金段落和答案的"], [5100, "情况较多，但在这项工作中，我们更"], [7020, "关注它"], [8940, "在后续检索中得到的答案和上下文。"], [10860, "在下一步中，"], [12780, "我们使用这些替代"], [14700, "答案和上下文来重新生成新"], [16620, "的问答，使其与这些"], [18540, "替代答案相对应。"], [20460, "问答生成模型是一种预训练"], [22380, "的文本到文本转换器，它在"], [24300, "NQ数据集上进行了微调，以生成"], [26220, "与标记在"], [28140, "上下文中的答案相对应的问题。在推理过程中，我们"], [30060, "将"], [31980, "替代答案和"], [33900, "上下文输入到问答生成模型中，这些是在上一步中检索到的。"], [35820, "例如，对于查询"], [37740, "“谁是里士满"], [39660, "足球俱乐部的队长？”，RAG检索"], [41580, "到了关于该俱乐部女子"], [43500, "队的信息，该队由杰斯·肯尼迪担任队长。"], [45420, "问答生成模型"], [47340, "生成了新的问题：“谁担任了里士满"], [49260, "足球俱乐部首支女子队的队长？”"], [51180, "这个问题具有"]], "rasst": [[1260, "REALM检索"], [3180, "到"], [5100, "答案在大多数情况下都正确，但在本工作中，我们更"], [7020, "关注的是它"], [8940, "在排序靠后位置检索到的答案和上下文。"], [10860, "下一步是问题生成"], [12780, "，我们使用这些替代"], [14700, "答案和上下文来重新生成"], [16620, "与这些替代"], [18540, "答案相对应的新问题。"], [20460, "问题生成模型是一种"], [22380, "经过预训练的文本到文本转换器，"], [24300, "在NQ数据集上进行了微调，以"], [26220, "根据"], [28140, "上下文中标记的答案生成问题。在推理过程中，我们"], [30060, "将问题生成模型应用于"], [31980, "替代答案和"], [33900, "我们从前一个步骤中检索到的上下文。"], [35820, "例如，对于询问"], [37740, "“里士满"], [39660, "足球俱乐部的队长是谁？”，REALM检索"], [41580, "到关于该俱乐部女子"], [43500, "队的段落，由杰斯·肯尼迪担任队长，"], [45420, "问题生成模型"], [47340, "生成了“谁担任"], [49260, "里士满足球俱乐部首个女子队的队长？”这一询问。"], [51180, "该询问具有"]], "lookups": [{"ms": 1260, "ragMs": 79, "refs": [{"term": "answer", "tr": "回答", "score": 0.955, "usedMs": null}, {"term": "REALM", "tr": "REALM", "score": 0.946, "usedMs": 1260}]}, {"ms": 3180, "ragMs": 63, "refs": [{"term": "answer", "tr": "回答", "score": 0.941, "usedMs": null}]}, {"ms": 5100, "ragMs": 61, "refs": []}, {"ms": 7020, "ragMs": 61, "refs": [{"term": "contexts", "tr": "上下文", "score": 0.913, "usedMs": 8940}, {"term": "context", "tr": "上下文", "score": 0.89, "usedMs": 8940}, {"term": "answer", "tr": "回答", "score": 0.849, "usedMs": null}]}, {"ms": 8940, "ragMs": 61, "refs": []}, {"ms": 10860, "ragMs": 61, "refs": [{"term": "question", "tr": "问题", "score": 0.899, "usedMs": 10860}, {"term": "questions", "tr": "问题", "score": 0.831, "usedMs": 10860}, {"term": "question generation", "tr": "问题生成", "score": 0.815, "usedMs": 10860}]}, {"ms": 12780, "ragMs": 61, "refs": [{"term": "generation", "tr": "生成", "score": 0.964, "usedMs": 14700}, {"term": "question generation", "tr": "问题生成", "score": 0.945, "usedMs": null}, {"term": "answer", "tr": "回答", "score": 0.842, "usedMs": null}]}, {"ms": 14700, "ragMs": 65, "refs": [{"term": "contexts", "tr": "上下文", "score": 0.942, "usedMs": 14700}, {"term": "context", "tr": "上下文", "score": 0.916, "usedMs": 14700}, {"term": "generated", "tr": "生成", "score": 0.89, "usedMs": 14700}, {"term": "answer", "tr": "回答", "score": 0.809, "usedMs": null}, {"term": "generating", "tr": "生成", "score": 0.797, "usedMs": 14700}]}, {"ms": 16620, "ragMs": 69, "refs": [{"term": "questions", "tr": "问题", "score": 0.939, "usedMs": 18540}, {"term": "question", "tr": "问题", "score": 0.81, "usedMs": 18540}]}, {"ms": 18540, "ragMs": 66, "refs": [{"term": "generation", "tr": "生成", "score": 0.933, "usedMs": 20460}, {"term": "question generation", "tr": "问题生成", "score": 0.929, "usedMs": 20460}, {"term": "question", "tr": "问题", "score": 0.806, "usedMs": 18540}]}, {"ms": 20460, "ragMs": 64, "refs": [{"term": "model", "tr": "模型", "score": 0.914, "usedMs": 20460}, {"term": "question generation", "tr": "问题生成", "score": 0.883, "usedMs": 20460}, {"term": "text", "tr": "文本", "score": 0.84, "usedMs": 22380}, {"term": "pre-training", "tr": "预训练", "score": 0.833, "usedMs": 22380}, {"term": "texts", "tr": "文本", "score": 0.828, "usedMs": 22380}, {"term": "pretrained", "tr": "预训练", "score": 0.821, "usedMs": 22380}, {"term": "pretraining", "tr": "预训练", "score": 0.794, "usedMs": 22380}]}, {"ms": 22380, "ragMs": 64, "refs": [{"term": "transformer", "tr": "转换器", "score": 0.966, "usedMs": 22380}, {"term": "transformers", "tr": "转换器", "score": 0.877, "usedMs": 22380}, {"term": "texts", "tr": "文本", "score": 0.871, "usedMs": 22380}, {"term": "transformer encoder", "tr": "转换器编码器", "score": 0.844, "usedMs": null}, {"term": "text", "tr": "文本", "score": 0.829, "usedMs": 22380}, {"term": "finetuning", "tr": "微调", "score": 0.809, "usedMs": 24300}]}, {"ms": 24300, "ragMs": 59, "refs": [{"term": "question", "tr": "问题", "score": 0.936, "usedMs": 28140}, {"term": "questions", "tr": "问题", "score": 0.879, "usedMs": 28140}, {"term": "data", "tr": "数据", "score": 0.858, "usedMs": 24300}, {"term": "generation", "tr": "生成", "score": 0.834, "usedMs": 28140}, {"term": "generated", "tr": "生成", "score": 0.827, "usedMs": 28140}, {"term": "question generation", "tr": "问题生成", "score": 0.822, "usedMs": null}, {"term": "generating", "tr": "生成", "score": 0.802, "usedMs": 28140}, {"term": "transformer encoder", "tr": "转换器编码器", "score": 0.796, "usedMs": null}, {"term": "finetuning", "tr": "微调", "score": 0.796, "usedMs": 24300}, {"term": "transformer", "tr": "转换器", "score": 0.783, "usedMs": null}]}, {"ms": 26220, "ragMs": 61, "refs": [{"term": "answer", "tr": "回答", "score": 0.963, "usedMs": null}, {"term": "question", "tr": "问题", "score": 0.952, "usedMs": 28140}, {"term": "context", "tr": "上下文", "score": 0.937, "usedMs": 28140}, {"term": "contexts", "tr": "上下文", "score": 0.918, "usedMs": 28140}, {"term": "questions", "tr": "问题", "score": 0.84, "usedMs": 28140}, {"term": "question answering", "tr": "问题回答", "score": 0.833, "usedMs": null}, {"term": "question generation", "tr": "问题生成", "score": 0.823, "usedMs": 30060}]}, {"ms": 28140, "ragMs": 57, "refs": [{"term": "context", "tr": "上下文", "score": 0.928, "usedMs": 28140}, {"term": "inference", "tr": "推理", "score": 0.924, "usedMs": 28140}, {"term": "contexts", "tr": "上下文", "score": 0.89, "usedMs": 28140}]}, {"ms": 30060, "ragMs": 63, "refs": [{"term": "question generation", "tr": "问题生成", "score": 0.922, "usedMs": 30060}, {"term": "model", "tr": "模型", "score": 0.908, "usedMs": 30060}, {"term": "inference", "tr": "推理", "score": 0.903, "usedMs": null}, {"term": "generation", "tr": "生成", "score": 0.873, "usedMs": 30060}, {"term": "question", "tr": "问题", "score": 0.834, "usedMs": 30060}]}, {"ms": 31980, "ragMs": 60, "refs": [{"term": "answer", "tr": "回答", "score": 0.944, "usedMs": null}, {"term": "context", "tr": "上下文", "score": 0.939, "usedMs": 33900}, {"term": "contexts", "tr": "上下文", "score": 0.929, "usedMs": 33900}, {"term": "model", "tr": "模型", "score": 0.871, "usedMs": null}, {"term": "question generation", "tr": "问题生成", "score": 0.858, "usedMs": null}]}, {"ms": 33900, "ragMs": 59, "refs": [{"term": "contexts", "tr": "上下文", "score": 0.95, "usedMs": 33900}, {"term": "context", "tr": "上下文", "score": 0.93, "usedMs": 33900}, {"term": "previous", "tr": "前一个", "score": 0.912, "usedMs": 33900}, {"term": "retrieved", "tr": "检索", "score": 0.891, "usedMs": 33900}, {"term": "answer", "tr": "回答", "score": 0.79, "usedMs": null}]}, {"ms": 35820, "ragMs": 68, "refs": [{"term": "query", "tr": "询问", "score": 0.969, "usedMs": 35820}, {"term": "queries", "tr": "询问", "score": 0.81, "usedMs": 35820}]}, {"ms": 37740, "ragMs": 66, "refs": [{"term": "query", "tr": "询问", "score": 0.966, "usedMs": null}, {"term": "queries", "tr": "询问", "score": 0.819, "usedMs": null}]}, {"ms": 39660, "ragMs": 89, "refs": [{"term": "REALM", "tr": "REALM", "score": 0.865, "usedMs": 39660}, {"term": "retrieved", "tr": "检索", "score": 0.804, "usedMs": 39660}]}, {"ms": 41580, "ragMs": 65, "refs": []}, {"ms": 43500, "ragMs": 63, "refs": []}, {"ms": 45420, "ragMs": 63, "refs": [{"term": "question generation", "tr": "问题生成", "score": 0.912, "usedMs": 45420}, {"term": "generation", "tr": "生成", "score": 0.895, "usedMs": 45420}, {"term": "model", "tr": "模型", "score": 0.879, "usedMs": 45420}, {"term": "models", "tr": "模型", "score": 0.78, "usedMs": 45420}]}, {"ms": 47340, "ragMs": 67, "refs": [{"term": "query", "tr": "询问", "score": 0.938, "usedMs": 49260}, {"term": "model", "tr": "模型", "score": 0.855, "usedMs": null}, {"term": "question generation", "tr": "问题生成", "score": 0.852, "usedMs": null}, {"term": "queries", "tr": "询问", "score": 0.783, "usedMs": 49260}]}, {"ms": 49260, "ragMs": 68, "refs": []}, {"ms": 51180, "ragMs": 57, "refs": [{"term": "Semantic", "tr": "语义", "score": 0.824, "usedMs": 53100}]}], "notes": [{"side": "base", "text": "RAG", "gloss": "a different method"}]}];</script>
+<script>
+(() => {
+  const CLIPS = window.RASST_CLIPS;
+  const root = document.documentElement;
+  const $ = (id) => document.getElementById(id);
+  const video = new URLSearchParams(location.search).has("video");
+  if (video) { root.classList.add("video"); root.dataset.theme = "dark"; }
+
+  const ARROW = { zh: "Chinese", ja: "Japanese", de: "German" };
+  const audio = new Audio();
+  audio.preload = "auto";
+  const blobs = {};
+  let clip = CLIPS[0];
+  let raf = 0;
+
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const norm = (s) => s.toLowerCase().replace(/\s+/g, "");
+  const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const clock = (sec) => {
+    const m = Math.floor(sec / 60), s = sec - m * 60;
+    return `${m}:${s.toFixed(1).padStart(4, "0")}`;
+  };
+
+  function prepare(c) {
+    if (c.prepared) return;
+    const byTr = new Map();
+    for (const s of c.sentences) for (const [term, tr] of s.terms) byTr.set(tr, term);
+    const need = new Map();
+    for (const s of c.sentences) for (const [, tr] of s.terms) need.set(norm(tr), (need.get(norm(tr)) || 0) + 1);
+    const baseFlat = norm(c.base.map((b) => b[1]).join(""));
+    const differs = (tr) => baseFlat.split(norm(tr)).length - 1 < need.get(norm(tr));
+    const good = [...byTr].map(([tr, term]) => ({
+      re: new RegExp(reEsc(tr).replace(/\s+/g, "\\s*"), "gi"),
+      cls: differs(tr) ? "good key" : "good", gloss: differs(tr) ? term : "", len: tr.length,
+    }));
+    c.patterns = {
+      base: good.concat(c.notes.filter((n) => n.side === "base").map((n) => ({ re: new RegExp(reEsc(n.text), "g"), cls: "bad", gloss: n.gloss, len: n.text.length }))),
+      rasst: good.concat(c.notes.filter((n) => n.side === "rasst").map((n) => ({ re: new RegExp(reEsc(n.text), "g"), cls: "bad", gloss: n.gloss, len: n.text.length }))),
+    };
+    const srcTerms = [...new Set(c.sentences.flatMap((s) => s.terms.map(([t]) => t)))].sort((a, b) => b.length - a.length);
+    c.srcRe = srcTerms.length ? new RegExp(`(?<![\\w-])(${srcTerms.map(reEsc).join("|")})(?![\\w-])`, "gi") : null;
+    c.prepared = true;
+  }
+
+  function streamText(bursts, ms, lang) {
+    const sep = lang === "de" ? " " : "";
+    const parts = [];
+    let typing = false;
+    for (const [at, txt] of bursts) {
+      if (at > ms) break;
+      const dur = Math.min(520, 140 + 22 * txt.length);
+      const age = ms - at;
+      if (age >= dur) parts.push(txt);
+      else { parts.push(txt.slice(0, Math.max(1, Math.round((txt.length * age) / dur)))); typing = true; }
+    }
+    return { text: parts.join(sep), typing };
+  }
+
+  function highlight(text, patterns) {
+    const hits = [];
+    for (const p of patterns) {
+      p.re.lastIndex = 0;
+      let m;
+      while ((m = p.re.exec(text))) hits.push({ a: m.index, b: m.index + m[0].length, p });
+    }
+    hits.sort((x, y) => x.a - y.a || (y.b - y.a) - (x.b - x.a));
+    let out = "", pos = 0;
+    for (const h of hits) {
+      if (h.a < pos) continue;
+      const g = h.p.gloss ? `<span class="g">${esc(h.p.gloss)}</span>` : "";
+      out += esc(text.slice(pos, h.a)) + `<mark class="${h.p.cls}">${g}${esc(text.slice(h.a, h.b))}</mark>`;
+      pos = h.b;
+    }
+    return out + esc(text.slice(pos));
+  }
+
+  function tally(c, sec, text, done) {
+    const need = new Map();
+    let total = 0;
+    for (const s of c.sentences) {
+      if (!done && s.e + 3 > sec) continue;
+      for (const [, tr] of s.terms) { const k = norm(tr); need.set(k, (need.get(k) || 0) + 1); total += 1; }
+    }
+    const flat = norm(text);
+    let hits = 0;
+    for (const [k, n] of need) hits += Math.min(n, flat.split(k).length - 1);
+    return { hits, total };
+  }
+
+  function renderSource(c, sec) {
+    let i = -1;
+    c.sentences.forEach((s, j) => { if (s.s <= sec) i = j; });
+    const mark = (t) => c.srcRe ? esc(t).replace(c.srcRe, "<u>$1</u>") : esc(t);
+    $("src-now").innerHTML = i >= 0 ? mark(c.sentences[i].text) : "";
+    $("src-prev").innerHTML = i >= 1 ? mark(c.sentences[i - 1].text) : "";
+  }
+
+  function renderSide(c, side, sec, done) {
+    const ms = sec * 1000;
+    const { text, typing } = streamText(c[side], ms, c.lang);
+    const el = $(`text-${side}`);
+    el.innerHTML = `<span class="gap">…</span>${highlight(text, c.patterns[side])}${typing && !done ? '<span class="caret"></span>' : ""}`;
+    const box = el.getBoundingClientRect();
+    let prev = null;
+    for (const g of el.querySelectorAll(".g")) {
+      if (g.getBoundingClientRect().right > box.right - 6) g.classList.add("end");
+      const r = g.getBoundingClientRect();
+      if (prev && Math.abs(r.top - prev.top) < 4 && r.left < prev.right + 6) { g.hidden = true; continue; }
+      prev = r;
+    }
+    if (!done || video) el.scrollTop = el.scrollHeight;
+    else el.scrollTop = 0;
+    const { hits, total } = tally(c, sec, text, done);
+    $(`score-${side}`).innerHTML = total ? `<b>${hits}</b> / ${total} terms right` : "terms right appear as the speaker says them";
+  }
+
+  function renderLookups(c, sec) {
+    const ms = sec * 1000;
+    const seen = c.lookups.filter((l) => l.ms <= ms);
+    const usedBefore = (l, tr) => seen.some((o) => o.ms < l.ms && l.ms - o.ms <= 3 * 1920 && o.refs.some((r) => r.tr === tr && r.usedMs !== null && r.usedMs <= l.ms));
+    const shown = seen.filter((l) => l.refs.length).slice(video ? -3 : -4).reverse();
+    const cur = seen.length;
+    $("lookups").innerHTML = shown.length ? shown.map((l) => {
+      const refs = l.refs.slice(0, video ? 2 : l.refs.length).map((r) => {
+        let st = "not used", cls = "skipped";
+        if (r.usedMs !== null && r.usedMs <= ms) { st = "used"; cls = "used"; }
+        else if (r.usedMs !== null) { st = "…"; cls = ""; }
+        else if (usedBefore(l, r.tr)) { st = "already in output"; cls = ""; }
+        return `<div class="ref ${cls}"><span class="pair">${esc(r.term)} → <span class="tr" lang="${c.lang}">${esc(r.tr)}</span></span><span class="st">${r.score.toFixed(2)} · ${st}</span></div>`;
+      }).join("");
+      return `<li class="lookup"><div class="meta"><span>chunk at ${clock(c.talkClock + l.ms / 1000)}</span><span>${l.ragMs} ms</span></div>${refs}</li>`;
+    }).join("") : `<li class="lookup-empty">${cur ? "No glossary entry scored above the 0.78 threshold yet." : "The first lookup runs when the first 1.92 s chunk arrives."}</li>`;
+  }
+
+  function render(sec) {
+    const c = clip;
+    const done = sec >= c.duration - 0.05;
+    renderSource(c, sec);
+    renderSide(c, "base", sec, done);
+    renderSide(c, "rasst", sec, done);
+    renderLookups(c, sec);
+    $("clock").textContent = `${clock(sec)} / ${clock(c.duration)} · talk time ${clock(c.talkClock + sec)}`;
+    if (!dragging) $("scrub").value = Math.round((sec / c.duration) * 1000);
+  }
+
+  function selectClip(id, sec) {
+    clip = CLIPS.find((c) => c.id === id) || CLIPS[0];
+    prepare(clip);
+    stop();
+    for (const b of $("cases").children) b.setAttribute("aria-selected", String(b.dataset.id === clip.id));
+    $("clip-kind").textContent = `${clip.domain} · English → ${ARROW[clip.lang]} · ${clip.dataset}`;
+    $("clip-title").textContent = clip.headline;
+    $("clip-summary").textContent = clip.summary;
+    $("rasst-who").textContent = `same audio, plus a ${clip.glossarySize}-term glossary`;
+    for (const side of ["base", "rasst"]) $(`text-${side}`).setAttribute("lang", clip.lang);
+    const rag = clip.lookups.map((l) => l.ragMs);
+    $("lookup-range").textContent = rag.length ? `lookup time ${Math.min(...rag)}–${Math.max(...rag)} ms` : "";
+    audio.removeAttribute("src");
+    render(sec ?? clip.duration);
+  }
+
+  async function ensureAudio(c) {
+    if (!blobs[c.audio]) {
+      const res = await fetch(c.audio);
+      if (!res.ok) throw new Error(`Audio failed to load (${res.status}).`);
+      blobs[c.audio] = URL.createObjectURL(await res.blob());
+    }
+    if (audio.getAttribute("src") !== blobs[c.audio]) audio.src = blobs[c.audio];
+  }
+
+  function tick() { render(Math.min(audio.currentTime, clip.duration)); raf = requestAnimationFrame(tick); }
+  function setPlaying(on) {
+    $("play-label").textContent = on ? "Pause" : (audio.currentTime > 0 && audio.currentTime < clip.duration - 0.05 ? "Resume" : "Play with sound");
+    $("play-icon").setAttribute("d", on ? "M2 1h3.5v12H2zM8.5 1H12v12H8.5z" : "M2 1l11 6-11 6z");
+  }
+  function stop() { audio.pause(); cancelAnimationFrame(raf); setPlaying(false); }
+
+  $("play").addEventListener("click", async () => {
+    if (!audio.paused) { stop(); render(audio.currentTime); return; }
+    try {
+      await ensureAudio(clip);
+      const at = (Number($("scrub").value) / 1000) * clip.duration;
+      audio.currentTime = at >= clip.duration - 0.1 ? 0 : at;
+      await audio.play();
+      setPlaying(true);
+      tick();
+    } catch (err) {
+      $("play-label").textContent = "Audio unavailable";
+      console.error(err);
+    }
+  });
+  audio.addEventListener("ended", () => { stop(); render(clip.duration); });
+
+  let dragging = false;
+  $("scrub").addEventListener("input", () => {
+    dragging = true;
+    const sec = (Number($("scrub").value) / 1000) * clip.duration;
+    if (!audio.paused) audio.currentTime = sec;
+    render(sec);
+    dragging = false;
+  });
+
+  $("cases").innerHTML = CLIPS.map((c) => `<button class="case" role="tab" type="button" data-id="${c.id}" aria-selected="false"><span class="k">${esc(c.domain)} · En → ${ARROW[c.lang]}</span><span class="h">${esc(c.headline)}</span></button>`).join("");
+  $("cases").addEventListener("click", (e) => {
+    const b = e.target.closest(".case");
+    if (b) { selectClip(b.dataset.id); try { history.replaceState(null, "", `#${b.dataset.id}`); } catch (_) {} }
+  });
+  $("credits").textContent = [...new Set(CLIPS.map((c) => c.credit))].join("; ");
+
+  const CARDS = {
+    title: `<div class="eyebrow">EMNLP 2026</div><h1>RASST</h1><h2>Streaming speech translation that looks up a glossary every 1.92 seconds</h2><p>Recorded output from our evaluation runs, replayed in sync with the speech. Left: the same kind of streaming model without a glossary.</p>`,
+    end: `<div class="eyebrow">Terminology accuracy, about 2 s behind the speaker</div><div class="big"><div><b>81%</b><span>oncology lectures</span></div><div><b>86%</b><span>NLP conference talks</span></div></div><p>Bring your own glossary: swap in your terms and rebuild the index, no retraining.</p><div class="links"><span>arxiv.org/abs/2601.22777</span><span>github.com/LeiLiLab/RASST</span></div><p class="credit">Audio: ESO speech dataset (Iranzo-Sánchez et al., 2025) and ACL 60/60 (Salesky et al., 2023).</p>`,
+  };
+  window.__rasst = {
+    renderAt(id, sec) { root.classList.remove("show-card"); if (clip.id !== id) selectClip(id, sec); render(sec); },
+    card(name) { $("card").innerHTML = CARDS[name]; root.classList.add("show-card"); },
+    clips: CLIPS.map((c) => ({ id: c.id, duration: c.duration })),
+  };
+
+  const start = location.hash.slice(1);
+  selectClip(CLIPS.some((c) => c.id === start) ? start : CLIPS[0].id);
+})();
+</script>
+</body>
+</html>
